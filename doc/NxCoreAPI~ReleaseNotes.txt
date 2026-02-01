@@ -1,0 +1,504 @@
+IMPORTANT
+=========
+
+  1. If you experience issues or have questions please contact technical support via email at support@nanex.net.
+  2. Please read the Windows release notes, NxCoreAPI~ReleaseNotes.txt, to learn of any global changes to the API.
+  3. Any Linux specific changes have been added to NxCoreAPI~ReleaseNotes~Linux.txt
+
+NxCoreAPI Version 3.2.19 (2025-09-26)
+============================================
+
+Bug Fixes
+============
+	1.  Shared object was allocating unnecessary resources when processing historical tapes.
+	2.  Certain types of errors would cause libnx.so to hang instead of aborting.
+
+
+NxCoreAPI Version 3.2.18 (2025-06-11)
+============================================
+
+New Features
+============
+	1.  Improved CRC performance for Intel processors.
+	
+Bug Fixes
+============
+	1.  Corrected issue in error handler not resetting status appropriately.
+
+
+NxCoreAPI Version 3.2.17 (2025-02-21)
+============================================
+
+Bug Fixes
+============
+	1.  When running libnx.so with options turn off, it was not allocating enough memory to handle certain tapes.
+	
+NxCoreAPI Version 3.2.16 (2024-11-13)
+============================================
+
+Bug Fixes
+============
+	1.  Libnx.so was attempting to open tape file with read/write access causing permissions problems. Now will
+		only open tape file with read permission
+	
+NxCoreAPI Version 3.2.15 (2024-08-11)
+============================================
+
+Bug Fixes
+============
+	1.  Patches StateGet... functions after prior day trades. 
+	
+NxCoreAPI Version 3.2.14 (2024-07-12)
+============================================
+
+Bug Fixes
+============
+	1.  Nasdaq Basic will now use the Nasdaq Trade conditions table instead of NYSE Trade conditions table. 
+	
+NxCoreAPI Version 3.2.12 (2024-05-25)
+============================================
+
+Bug Fixes
+============
+	1. When libnx.so was interrupted using kill command, condition variables may not be properly cleaned up if the decoder was
+	   waiting for a signal from NxCoreAccess.
+	2. Pre-load of option headers was taking too long to process.
+	3. Very rarely, when processing trades after session transition, libnx.so will start throwing MSGCHKSUM errors. This has been corrected.
+	
+NxCoreAPI Version 3.2.12 (2024-07-05)
+============================================
+
+New Features
+============
+    1. Now supports running libnx.so from Docker container.
+
+
+NxCoreAPI Version 3.2.11 (2024-04-29)
+============================================
+
+New Features
+============
+    1. Modified NxCoreAPI.h to make UserData1 and UserData2 fields mutable. Since API callback use const references to NxCore
+       objects, newer compilers did not allow for type casting these in order for users to update values.
+
+Bug Fixes
+============
+	1. Exiting too quickly When waiting for NxCoreAccess update, causing processing loop to restart connection to 
+	   NxCoreAccess too often.
+	2. When exiting processing loop, was not properly cleaning up mutex and condition variable. This would sometimes cause
+	   NxCoreAccess to hang.
+	
+    
+NxCoreAPI Version 3.2.10 (2024-03-13)
+============================================
+
+New Features
+============
+    1. Initial port to ARM.
+    
+
+NxCoreAPI Version 3.2.9 (Beta) (2024-01-19)
+============================================
+
+    Port to maxOS. It is compatible with NxCoreAccess v3.2.6 and NxCoreClient v1.2.1.
+
+New Features
+============
+    1. Initial port to macOS.
+    
+Bug Fixes
+=========
+	1. Fix to save state which would occasionally have problem on reload from state.
+	1. If NxCoreAccess was not running, libnx.so was returning error NxCORESTATUS_WAITFORCOREACCESS more than once
+	   per second.
+	2. While waiting on event, could sometimes get hung if process holding event exits without releasing the mutex.
+	
+    
+NxCoreAPI Version 3.2.8 (2023-12-26)
+======================================
+
+	This is a patch release of libnx.so. It is compatible with NxCoreAccess v3.2.4 and NxCoreClient v1.1.1.
+
+Bug Fixes
+============
+	1. Tick volume was not correctly being decremented for cancel messages.
+    
+New Features
+============
+	1. Ensure proper alignment for all objects within NxCore shared object.
+	
+	
+
+NxCoreAPI Version 3.2.7 (2023-10-30)
+======================================
+
+	This is a patch release of libnx.so. It is compatible with NxCoreAccess v3.2.4 and NxCoreClient v1.1.1.
+
+Bug Fixes
+============
+	1. Correct problem for OPRA NBBO tape when session changes at 20:15.
+	
+
+NxCoreAPI Version 3.2.6 (2023-10-24)
+======================================
+
+	This is a patch release of libnx.so. It is compatible with NxCoreAccess v3.2.4 and NxCoreClient v1.1.1.
+
+New Features
+============
+	1. Reorganization of some internal memory for OPRA NBBO processing. Yielded upwards of 20% perforance improvement.
+	
+
+NxCoreAPI Version 3.2.5 (2023-10-24)
+======================================
+
+	This is a patch release of libnx.so. It is compatible with NxCoreAccess v3.2.4 and NxCoreClient v1.1.1.
+
+New Features
+============
+	1. Bug fixes within NxCore memory management system, improving performance for full OPRA tape processing.
+	
+
+NxCoreAPI Version 3.2.2 (2023-02-07)
+======================================
+
+	New version of libnx.so which support the new Nanex client for Linux (v1.1.1). If running with "live" data, must
+	be used with NxCoreAccess v3.2.2. There are no know problems with running this version against tapes created by 
+	earlier versions.
+
+New Features
+============
+	1. Supports the NxCoreClient application for Linux.
+
+
+NxCoreAPI Version 3.1.184 (2023-02-06)
+======================================
+
+	This is a patch release to libnx.so. It should be run with NxCoreAccess v3.1.259. however it will run with 
+	version v3.1.253 through v3.1.257, but some of the improved features may not be present.
+
+Bug Fixes
+=============
+	1. Change to insure users can use certain callback functions before they receive data.
+	2. In certain situations, when in a user callback function, libnx.so would catch signals generated in the callback function.
+	   This caused libnx.so to become unstable and possibly hang.
+
+NxCoreAPI Version 3.1.183 (2022-12-20)
+======================================
+
+	This is a patch release to libnx.so. It should be run with NxCoreAccess v3.1.259. however it will run with 
+	version v3.1.253 through v3.1.257, but some of the improved features may not be present.
+
+New Features
+=============
+	1. Improved handling of the NxSharedPool.
+
+
+NxCoreAPI Version 3.1.182 (2022-12-07)
+======================================
+
+	This is a patch release to libnx.so. It is backward compatible with earlier version of libnx.so and NxCoreAccess v3.1.253 through v3.1.258.  
+
+Bug Fixes
+=========
+	1. Insure shared pool is never unlinked.
+
+
+NxCoreAPI Version 3.1.181 (2022-12-01)
+======================================
+
+	This is a patch release to libnx.so. It is backward compatible with earlier version of libnx.so and NxCoreAccess v3.1.253 through v3.1.257.  
+
+Bug Fixes
+=========
+	1. When encountering tape errors, libnx.so was not always performing the user's callback function.
+	2. Certain exceptions were causing libnx.so to go into an endless loop.
+	3. Optimization issues were causing libnx.so to SEGFAULT on certain exceptions.
+
+
+NxCoreAPI Version 3.1.180 (2022-11-08)
+======================================
+
+	This is a patch release to libnx.so. It is backward compatible with earlier version of libnx.so and NxCoreAccess v3.1.253 throug v3.1.257.  
+	
+
+Bug Fixes
+=========
+	1. More memory alignment fixes
+	2. Some minor synchronization patches.
+
+
+NxCoreAPI Version 3.1.179 (2022-10-13)
+======================================
+
+	This is a patch release to libnx.so. It is backward compatible with earlier version of libnx.so and NxCoreAccess v3.1.253.  
+	
+
+Bug Fixes
+=========
+	1. Attempts to properly align pointers in v3.1.178 introduced a bug in options data processing when using StateGetExgQuotes
+	   function in NxCoreAPI. This has been corrected.
+
+
+NxCoreAPI Version 3.1.178 (2022-08-01)
+======================================
+
+	This is a patch release to libnx.so. However, since some of the fixes required parallel changes in NxCoreAccess, this version of
+	libnx.so is only compatible with NxCoreAccess v3.1.253 or higher when running "live" mode. 
+	
+	This version is backward compatible with earlier versions of historic tape files.
+	
+	This version is NOT compatible with earlier versions of libnx.so state files. If using state files, these need to be run using
+	an earlier version of libnx.so, so please keep the legacy version.
+	
+Bug Fixes
+=========
+	1. If libnx.so was running in live mode and completely caught up, if the process was terminated, would sometimes cause
+	   NxCoreAccess to hang when libnx.so was restarted. This has been corrected.
+	2. Certain versions of Linux were causing memory access issues, due to some pointer alignment problems within libnx.so.
+	   These alignment issues have been resolved.
+	3. When processing some large tapes, while excluding OPRA using NxCF_EXCLUDE_OPRA control false, libnx.so may run out of memory. 
+	   Memory allocation for these situations has been increase from 256 Mb to 384 Mb to resolve this.
+	4. When running against a historical tape, libnx.so would sometimes fail if NxCoreAccess was not running. This has been corrected.
+
+
+NxCoreAPI Version 3.1.177 (2022-06-16)
+======================================
+
+Bug Fixes
+=========
+	1. Some pointers in category messages were not properly aligned if certain fields were not set by NxCoreAccess.
+
+
+NxCoreAPI Version 3.1.176 (2022-06-03)
+======================================
+
+Bug Fixes
+=========
+	1. Properly handle spurious wakeup in some event handlers
+	2. Load from state file could cause exceptions if reloading in multi-threaded reader application.
+
+
+NxCoreAPI Version 3.1.175 (2022-05-18)
+======================================
+
+Bug Fixes
+=========
+	1. Callback function was not always returning a pointers properly aligned. This was causing errors to be thrown
+	   when running with -fsanitize compiler option.
+	2. Saving a state file gradually was not working if application sent stop before completion.
+	3. Synchronized load and save core to avoid potential mapping errors.
+	4. Fixed exception handler which could throw unexpected errors if restarting ProcessTape within the same thread.
+
+NxCoreAPI Version 3.1.174 (2022-04-05)
+======================================
+
+Bug Fixes
+=========
+	1. Certain OPRA symbols were not populating the Best Bid/Ask prices and sizes. This has been corrected.
+
+NxCoreAPI Version 3.1.173 (2021-12-13)
+======================================
+
+Changes
+=======
+	1. NxCoreAPI will no longer trap SIGINT signals. The SIGSEGV, SIGFPE and SIGBUS errors will be trapped by NxCoreAPI, however
+	   they will be re-signaled if they are not handled by NxCoreAPI.
+
+Bug Fixes
+=========
+	1. When processing active tape, was not invoking user callback function with status of NxCORESTATUS_WAITFORCOREACCESS.
+	2. In a multi-threaded reader, libnx.so would erroneously release shared memory on completion of process_tape, even if 
+	   other threads running process tape are still active. This has been corrected.
+	3. On calling process_tape multiple times within a thread, libnx.so would not always cleanup necessary memory after 
+	   the initial process_tape completed. This has been corrected.
+	4. When processing historical tape, was return successful completion when end of file was reached, even if no end of
+	   tape message was present.  Will not return NxCORESTATUS_WAITFORCOREACCESS if not end of tape is present.
+	5. When encountering a SIGSEGV fault, NxCoreAPI went into endless loop instead of re-signaling the exception.
+	6. When loading from a core file, if the address returned is different than when created, decoder could fail.
+	7. Sometimes when shutting down a libnx.so reader, it would hang on shutdown.
+
+NxCoreAPI Version 3.1.172 (2021-10-18)
+======================================
+
+Bug Fixes
+=========
+
+	1. Correct some memory leaks when shutting down the API.
+	2. Linked with static C++ library to allow for backward compatability.
+
+NxCoreAPI Version 3.1.171 (2021-07-23)
+======================================
+
+This version of the NxCoreAPI is required for processing real-time data if running NxCoreAccess v3.1.245 or above.
+
+New Features
+============
+	1. Implemented the API function 'pfNxCoreListTapes' function.  For C++ wrapper, you can access this function using 
+	   the NxCore.ListTapes() function.
+	2. Implemented the API function 'pfNxCoreListAPIDLLs' function. For C++ wrapper, you can access this function using
+	   the NxCore.ListAPIDLLs() function.
+	3. Implemented new API function 'pfNxCoreListTapesFolder' function and C++ wrapper function NxCore.ListTapesFolder(). This
+	   will allow you to search for tapes within a folder that you specified.
+	3. Implemented new API function 'pfNxCoreListDLLsFolder' function and C++ wrapper function NxCore.ListDLLsFolder(). This
+	   will allow you to search for Nanex library files within a folder that you specified.
+	   
+NxCoreAPI Version 3.1.169 (2021-06-01)
+======================================
+
+New Features
+============
+	1. Support for TotalView.
+	   
+
+NxCoreAPI Version 3.1.168 (2021-04-23)
+======================================
+
+This is a patch release of NxCore API software.
+
+Fixed Bugs
+==========
+	1. In certain situations, libnx.so would cause a SEGFAULT on exit from user application. This was caused by a redundant call
+	   to a destructor on unloading of the shared object.
+	   
+
+NxCoreAPI Version 3.1.166 (2021-02-16)
+======================================
+
+This is a patch release of NxCore API software.
+
+Fixed Bugs
+==========
+	1. Some users were having memory alloaction/deallocation issues, causing SEGFAULTS,  when running multiple instances of 
+	   the NxCore DLL in separate threads. This has been corrected.
+
+
+NxCoreAPI Version 3.1.165 (2021-01-08)
+======================================
+
+This version of the NxCore API software is a major overhaul of the software built for Linux. It requires the use of NxCoreAcess 
+version 3.1.136 or greater to process real-time data. There are no know issues with using this API on tapes created by earlier 
+versions of NxCoreAccess.
+
+New Features
+============
+	1. New SampleApp12.cpp was created to demonstrate how properly use the save state functionality to save and restore
+	   from a state file.
+	   
+Fixed Bugs
+==========
+	1. Previously, on certain version of Centos/RedHat, the save state functionality was not working properly. This has
+	   been corrected.
+
+
+NxCoreAPI Version 3.1.130 (2017-11-01)
+======================================
+
+Fixed Bugs
+==========
+
+    1. Previously, when loading a saved state for the current day, the API would erroneously set pNxCoreSystem->Status to 
+       NxCORESTATUS_WAITFORCOREACCESS.  This has been fixed and state files loaded for the current day will transition to
+       real-time smoothly.
+
+
+
+NxCoreAPI Version 3.1.126 (2017-02-16)
+======================================
+
+New Features
+============
+
+     1. Optimized the transition over the midnight rollover allowing for quicker day-to-day access for clients processing U.S. futures. 
+     2. The C and C++ wrappers were re-named to clarify their usage: 
+     
+         C Wrapper:
+         ==========
+         
+           NxCoreLoadLib.h -> NxCoreAPI_Wrapper_C.h
+
+         C++ Wrapper:
+         ============
+            
+           NxCoreAPI_Class.h -> NxCoreAPI_Wrapper_C++.h,
+            
+     3. Previously, the sample wrapper code had the libnx.so value hard coded, now each of the wrappers accepts the libnx.so path as an argument:
+
+         C Wrapper:
+         ==========
+     
+           loadNxCore("/path/to/libnx.so")
+   
+	 C++ Wrapper:
+     	 ============
+     	 
+     	   NxCore.LoadNxCore("/path/to/libnx.so")
+
+
+Fixed Bugs
+==========
+
+     1. Fixed a critical memory issue that was causing the reserved memory space by each call to processTape() to not be released properly.
+
+     2. The libnx.so is now aware of "eastern time" (ET) in respect to the local clock and should now properly sync up shared memory with NxCoreAccess
+        regardless of the timezone of the local machine that is running NxCoreAccess and/or any NxCore based applications that want to use
+        the shared memory for processing data.
+
+
+NxCoreAPI Version 3.1.102 (2016-12-06)
+======================================
+
+New Features
+============
+        None.
+
+Fixed Bugs
+==========
+
+      1. Fixed a critical issue with memory rebasing when processing .nx2 and .nx3 tapes.
+
+Misc Changes
+============
+
+      1. The function pfNxCoreProcessTape (NxCore.ProcessTape for C++)  has been updated such that the UserData variable being passed in must now be an "int",
+         just like on Windows. This decision was made due to the windows API existing nearly a decade before the Linux variant and makes it easier to support testing
+         both implementations.
+
+         !!!CAUTION!!! Users who have NxCore applications that rely the previous "void *" data type will need to make
+         changes to handle the "int" type.  The files NxCoreAPI.h and NxCoreAPI_Class.h have been updated appropriately.
+	 
+	 The typedef for the function NxCoreProcessTape has been restored to match Windows, as seen here:
+
+	 typedef int (__stdcall *NxCoreProcessTape) (const char* pszFilename,const char* pBaseMemory,unsigned int controlFlags,int UserData,NxCoreCallback stdcallback);
+
+
+NxCoreAPI Version 3.1.86 (2016-08-11)
+=====================================
+
+New Features
+============
+	None.
+
+Fixed Bugs
+==========
+	None.
+
+Misc Changes
+============
+
+      1. NxCoreAPI versions for linux will now have an odd minor build number.  For example, 3.1.86 for the
+         linux version, and 3.0.80 for the Windows version.
+      2. The linux NxCoreAPI will now use an NxCoreAPI.h header file instead of NxCoreAPIDU.h.
+
+      
+NxCoreAPI Version 3.0.80 (2016-08-10)
+=====================================
+
+New Features
+============
+        None.
+
+Fixed Bugs
+==========
+
+      1. Split OPRA only tapes should no longer have an issue with symbol spins if a non-OPRA symbol is sent.
