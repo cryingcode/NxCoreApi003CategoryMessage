@@ -4,7 +4,7 @@
 [![CMake](https://img.shields.io/badge/CMake-3.25+-green?logo=cmake&logoColor=white)](https://cmake.org)
 [![Ubuntu 24.04](https://img.shields.io/badge/Ubuntu-24.04-orange?logo=ubuntu&logoColor=white)](https://ubuntu.com)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![CI - Build & Test](https://github.com/cryingcode/NxCoreApi003CategoryMessage/actions/workflows/ci-build.yml/badge.svg)](https://github.com/cryingcode/NxCoreApi003CategoryMessage/actions)
+<!-- [![CI - Build & Test](https://github.com/cryingcode/NxCoreApi003CategoryMessage/actions/workflows/ci-build.yml/badge.svg)](https://github.com/cryingcode/NxCoreApi003CategoryMessage/actions) -->
 
 NxCore historical tapefile reader (.nx2/.nx3): Linux-based C++17 code built using modern CMake and demonstrating how to access the Category Message.
 
