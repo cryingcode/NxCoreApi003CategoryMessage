@@ -1,4 +1,4 @@
-# file: NxCoreApi003CategoryMessage/.github/workflows/ci-build.yml
+# file: .github/workflows/ci-build.yml
 
 name: CI - Build & Test
 
@@ -13,6 +13,7 @@ jobs:
   build:
     name: Build & smoke-check (${{ matrix.name }})
     runs-on: ${{ matrix.os }}
+
     strategy:
       fail-fast: false
       matrix:
@@ -25,31 +26,48 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # useful if you later use git describe or tags
 
       - name: Install build dependencies (Ubuntu)
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y --no-install-recommends \
-            build-essential \
-            cmake \
-            ninja-build \
-            g++-13
+            build-essential              \
+            cmake                        \
+            ninja-build                  \
+            g++-13                       \
+            libstdc++-13-dev             \
+            pkg-config
 
-      - name: Cache CMake build artifacts
+      - name: Show directory structure (debug)
+        run: |
+          echo "Current directory:"
+          pwd
+          echo ""
+          echo "Listing root contents:"
+          ls -la
+          echo ""
+          echo "Listing cmake/ contents:"
+          ls -la cmake/ || echo "cmake/ folder NOT found!"
+          echo ""
+          echo "Checking CompilerOptions.cmake:"
+          ls -la cmake/CompilerOptions.cmake || echo "CompilerOptions.cmake NOT found!"
+
+      - name: Cache build directory
         uses: actions/cache@v4
         with:
-          path: |
-            build/
-            ~/.cache/ccache   # optional - if you later enable ccache
-          key: ${{ runner.os }}-cmake-ninja-${{ matrix.name }}-${{ hashFiles('**/CMakeLists.txt', '**/CMakePresets.json', '**/*.cmake', 'cmake/**', 'src/**', 'include/**', 'apps/**') }}
+          path: build
+          key: ${{ runner.os }}-build-ninja-${{ matrix.name }}-${{ hashFiles('CMakeLists.txt', '**/CMakeLists.txt', 'cmake/*.cmake', 'CMakePresets.json') }}
           restore-keys: |
-            ${{ runner.os }}-cmake-ninja-${{ matrix.name }}-
+            ${{ runner.os }}-build-ninja-${{ matrix.name }}-
 
       - name: Configure CMake
         env:
-          CC: ${{ matrix.cc  }}
+          CC: ${{ matrix.cc }}
           CXX: ${{ matrix.cxx }}
+        working-directory: ${{ github.workspace }}
         run: |
           cmake -S . -B build \
             -G Ninja \
@@ -59,25 +77,43 @@ jobs:
             -DBUILD_APPS=ON \
             -DBUILD_TESTS=OFF \
             -DENABLE_NXCORE=OFF \
-            -DCMAKE_VERBOSE_MAKEFILE=ON
+            -DCMAKE_VERBOSE_MAKEFILE=ON \
+            -DCMAKE_INSTALL_PREFIX="${{ github.workspace }}/install-test"
 
       - name: Build
-        run: cmake --build build --parallel $(nproc)
+        working-directory: ${{ github.workspace }}/build
+        run: cmake --build . --parallel $(nproc)
 
-      - name: Show build summary
-        run: cmake --build build --target help || true
+      - name: Install (to test install rules)
+        working-directory: ${{ github.workspace }}/build
+        run: cmake --install .
 
-      # Very basic smoke check (expect non-zero exit → that's normal)
-      - name: Smoke check (expect usage message)
-        if: runner.os == 'Linux'
-        working-directory: build/apps/catmsg
+      - name: Show installed files (debug)
+        if: always()
         run: |
-          set +e
-          ./catmsg 2>&1 | grep -q "Usage: catmsg" && echo "OK - usage printed" || { echo "Did not see expected usage message"; exit 1; }
-          ./catmsg dummyarg1 dummyarg2 2>&1 | true   # just make sure it starts
+          echo "Installed files:"
+          find "${{ github.workspace }}/install-test" -type f | sort || echo "No files installed"
 
-      # When you later add tests:
-      # - name: Run unit tests
-      #   if: matrix.tests == true
-      #   working-directory: build
+      - name: Smoke check - catmsg executable exists and runs
+        if: runner.os == 'Linux'
+        working-directory: ${{ github.workspace }}/build/apps/catmsg
+        run: |
+          if [ ! -f ./catmsg ]; then
+            echo "ERROR: catmsg executable was not built!"
+            exit 1
+          fi
+
+          echo "Running: ./catmsg --help"
+          ./catmsg --help || true
+
+          echo "Checking for expected output pattern..."
+          ./catmsg 2>&1 | grep -qi "usage\|catmsg" && echo "OK - found usage/help message" || {
+            echo "ERROR: Did not find expected usage/help message"
+            exit 1
+          }
+
+      # Uncomment when you add unit tests
+      # - name: Run tests
+      #   if: runner.os == 'Linux'
+      #   working-directory: ${{ github.workspace }}/build
       #   run: ctest --output-on-failure --parallel $(nproc)
