@@ -7,7 +7,6 @@
 # CMake cache / generated files
 CMakeCache.txt
 CMakeFiles/
-*.cmake
 compile_commands.json
 
 # Proprietary files (already mentioned in README)
