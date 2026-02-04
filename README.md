@@ -11,7 +11,7 @@ NxCore historical tapefile reader (.nx2/.nx3): Linux-based C++17 code built usin
 **Status:** Tested on Ubuntu 24.04 LTS with libnx.so Linux x64 (latest version as of early 2026).
 
 ## Quick Start (Ubuntu 24.04)
-From the main project directory containing the src/ subdirectory the fastest way (uses a convenience script):
+From the main project directory `NxCoreApi003CategoryMessage` the fastest quick build uses a convenience script:
 ```bash
 # 1. Place libnx.so in ./extern/nxcore/libnx.so
 # 2. Build & install from the main project directory

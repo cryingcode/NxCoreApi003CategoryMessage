@@ -105,6 +105,7 @@ if(BUILD_LIBRARY)
             src/executableUtils.cpp
             src/nxcaExceptions.cpp
             src/nxcoreCallback.cpp
+            src/categoryMessageDump.cpp
             src/processNxCoreCategoryMessage.cpp
             src/processNxCoreStatusMessage.cpp
             src/processNxCoreSymbolSpinMessage.cpp
