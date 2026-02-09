@@ -1,63 +1,107 @@
-// file:  processNxCoreSymbolSpinMessage.cpp
+// processNxCoreSymbolSpinMessage.cpp
 
 #include <iomanip>
+#include <sstream>
+#include <string>
+#include <string_view>
+#include <cstring> // strlen
+
 #include "processNxCoreSymbolSpinMessage.hpp"
 
-extern NxCoreClass NxCore; // defined in main.cpp
+extern NxCoreClass NxCore;
 
-int processNxCoreSymbolSpinMessage(
-    [[maybe_unused]] const NxCoreSystem *pNxCoreSys,
-    const NxCoreMessage *pNxCoreMsg)
+[[nodiscard]] int processNxCoreSymbolSpinMessage(
+    const NxCoreSystem * /*pNxCoreSys*/, // Unused for now, but included for future context needs
+    const NxCoreMessage *pNxCoreMsg,
+    std::ostream &out) noexcept
 {
-    // If this is an option, and there is a valid option header, use it
-    if ((pNxCoreMsg->coreHeader.pnxStringSymbol->String[0] == 'o') && (pNxCoreMsg->coreHeader.pnxOptionHdr != NULL))
+    if (!pNxCoreMsg || !pNxCoreMsg->coreHeader.pnxStringSymbol)
     {
-        // Get the strike price from header info
-        double StrikePrice;
-        StrikePrice = pNxCoreMsg->coreHeader.pnxOptionHdr->strikePrice / 1000.0;
+        return NxCALLBACKRETURN_CONTINUE;
+    }
 
-        char OptionSymbol[40];
-        char UnderlyingStr[25];
-        char SeriesStr[255];
-        UnderlyingStr[0] = SeriesStr[0] = OptionSymbol[0] = 0;
+    const auto *sym = pNxCoreMsg->coreHeader.pnxStringSymbol;
+    const auto *optHdr = pNxCoreMsg->coreHeader.pnxOptionHdr;
 
-        // Get the DateStrike string, Series string and Underlying symbol string
-        // NOTE: VERY IMPORTANT TO NOT PASS NULL POINTERS IN AS ADDY FOR A STRING!!
-        // SOME OF THESE STRINGS MAY OCCASIONALLY BE NULL
-        if (pNxCoreMsg->coreHeader.pnxOptionHdr->pnxsUnderlying)
-            strcpy(UnderlyingStr, pNxCoreMsg->coreHeader.pnxOptionHdr->pnxsUnderlying->String);
-        if (pNxCoreMsg->coreHeader.pnxOptionHdr->pnxsSeriesChain)
-            strcpy(SeriesStr, pNxCoreMsg->coreHeader.pnxOptionHdr->pnxsSeriesChain->String);
+    if (sym->String[0] != 'o' || !optHdr)
+    {
+        return NxCALLBACKRETURN_CONTINUE;
+    }
 
-        // If pnxsDateAndStrike->String[1] == ' ', then this symbol is in new OSI format.
-        if (pNxCoreMsg->coreHeader.pnxOptionHdr->pnxsDateAndStrike->String[1] == ' ')
+    const std::string_view nx_symbol(sym->String); // null-terminated
+
+    const double strike_price = optHdr->strikePrice / 1000.0;
+
+    std::string underlying;
+    std::string series;
+
+    if (optHdr->pnxsUnderlying && optHdr->pnxsUnderlying->String[0] != '\0')
+    {
+        underlying = optHdr->pnxsUnderlying->String;
+    }
+
+    if (optHdr->pnxsSeriesChain && optHdr->pnxsSeriesChain->String[0] != '\0')
+    {
+        series = optHdr->pnxsSeriesChain->String;
+    }
+
+    std::string readable_symbol;
+
+    const auto *date_strike = optHdr->pnxsDateAndStrike;
+
+    if (date_strike && date_strike->String[0]) // Silences warning, same safety check is done in NxCore server before sending the message with a non-null pnxsDateAndStrike pointer.
+    {
+        // OSI format check (exactly 2 chars, not null-terminated)
+        if (date_strike->String[1] == ' ')
         {
-            // Construct OSI Symbol, take out 'o' from symbol root (String+1)
+            const std::string_view root(nx_symbol.data() + 1);
 
-            sprintf(OptionSymbol, "%-6s%02d%02d%02d%c%08d",
-                    pNxCoreMsg->coreHeader.pnxStringSymbol->String + 1,
-                    pNxCoreMsg->coreHeader.pnxOptionHdr->nxExpirationDate.Year - 2000,
-                    pNxCoreMsg->coreHeader.pnxOptionHdr->nxExpirationDate.Month,
-                    pNxCoreMsg->coreHeader.pnxOptionHdr->nxExpirationDate.Day,
-                    (pNxCoreMsg->coreHeader.pnxOptionHdr->PutCall == 0) ? 'C' : 'P',
-                    pNxCoreMsg->coreHeader.pnxOptionHdr->strikePrice);
+            const int yy = optHdr->nxExpirationDate.Year % 100;
 
-            // Print the option symbol, underlying symbol and the series chain
-            cout << "Symbol Spin for: " << " NxSym: " << pNxCoreMsg->coreHeader.pnxStringSymbol->String << " OSI Sym: " << OptionSymbol << " Strike: " << fixed << setprecision(2) << StrikePrice << " Underlying: " << UnderlyingStr << " Series Chain: " << SeriesStr << endl;
+            std::ostringstream oss;
+            oss << std::left << std::setw(6) << root
+                << std::setfill('0')
+                << std::setw(2) << yy
+                << std::setw(2) << optHdr->nxExpirationDate.Month
+                << std::setw(2) << optHdr->nxExpirationDate.Day
+                << ((optHdr->PutCall == 0) ? 'C' : 'P')
+                << std::setfill('0') << std::setw(8) << optHdr->strikePrice;
+
+            readable_symbol = oss.str();
+
+            out << "Symbol Spin for: "
+                << " NxSym: " << nx_symbol
+                << " OSI Sym: " << readable_symbol
+                << " Strike: " << std::fixed << std::setprecision(2) << strike_price
+                << " Underlying: " << underlying
+                << " Series Chain: " << series
+                << '\n';
         }
-
-        // Otherwise the symbol is in old OPRA format.
-        // Take out 'o' from symbol series (String+1)
+        // Legacy OPRA
         else
         {
-            sprintf(OptionSymbol, "%s%c%c",
-                    pNxCoreMsg->coreHeader.pnxStringSymbol->String + 1,
-                    pNxCoreMsg->coreHeader.pnxOptionHdr->pnxsDateAndStrike->String[0],
-                    pNxCoreMsg->coreHeader.pnxOptionHdr->pnxsDateAndStrike->String[1]);
+            std::ostringstream oss;
+            oss << (nx_symbol.data() + 1)
+                << date_strike->String[0]
+                << date_strike->String[1];
 
-            // Print the option symbol, underlying symbol and the series chain
-            cout << "Symbol Spin for: " << " NxSym: " << pNxCoreMsg->coreHeader.pnxStringSymbol->String << " OPRA Sym: " << OptionSymbol << " Strike: " << fixed << setprecision(2) << StrikePrice << " Underlying: " << UnderlyingStr << " Series Chain: " << SeriesStr << endl;
+            readable_symbol = oss.str();
+
+            out << "Symbol Spin for: "
+                << " NxSym: " << nx_symbol
+                << " OPRA Sym: " << readable_symbol
+                << " Strike: " << std::fixed << std::setprecision(2) << strike_price
+                << " Underlying: " << underlying
+                << " Series Chain: " << series
+                << '\n';
         }
     }
+    else
+    {
+        out << "Symbol Spin (no date/strike): NxSym: " << nx_symbol
+            << " Strike: " << std::fixed << std::setprecision(2) << strike_price
+            << '\n';
+    }
+
     return NxCALLBACKRETURN_CONTINUE;
 }

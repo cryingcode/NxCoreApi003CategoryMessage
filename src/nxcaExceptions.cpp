@@ -1,50 +1,57 @@
-// file:  nxcaExceptions.cpp
-
+// nxcaExceptions.cpp
 #include "nxcaExceptions.hpp"
 
-std::string to_string(NxCAException code)
+#include <string_view>
+
+using namespace std::literals;
+
+[[nodiscard]] std::string_view to_string_view(NxCAException e) noexcept
 {
-    switch (code)
+    switch (e)
     {
-    case NxCAException::NxCA_EXCEPTION_USER_CANCEL:
-        return "User called cancel.";
-    case NxCAException::NxCA_EXCEPTION_USER_RESTART:
-        return "User called restart.";
-    case NxCAException::NxCA_EXCEPTION_CLOCK_CRC:
-        return "A secondary CRC has failed, data is corrupt and the tape should be re-downloaded. Contact Nanex support (support@nanex.net) for assistance replacing tapes.";
-    case NxCAException::NxCA_EXCEPTION_MSG_BIT_SIZE:
-        return "Too many or too few bits were decoded, data is corrupt and the tape should be re-downloaded. Contact Nanex support (support@nanex.net) for assistance replacing tapes.";
-    case NxCAException::NxCA_EXCEPTION_MSG_CHK_SUM:
-        return "A tertiary checksum has failed, data is corrupt and the tape should be re-downloaded. Contact Nanex support (support@nanex.net) for assistance replacing tapes.";
-    case NxCAException::NxCA_EXCEPTION_DECODE_FIELDS:
-        return "Category fields failed a check, data is corrupt and the tape should be re-downloaded. Contact Nanex support (support@nanex.net) for assistance replacing tapes.";
-    case NxCAException::NxCA_EXCEPTION_DECODE_CAT_DEF:
-        return "Category definitions failed a check, data is corrupt and the tape should be re-downloaded. Contact Nanex support (support@nanex.net) for assistance replacing tapes.";
-    case NxCAException::NxCA_EXCEPTION_DECODE_CAT_DATA:
-        return "Category data failed a check, data is corrupt and the tape should be re-downloaded. Contact Nanex support (support@nanex.net) for assistance replacing tapes.";
-    case NxCAException::NxCA_EXCEPTION_LISTED_EXG:
-        return "A listed exchange was referenced that was not defined. Your permissions may need to be adjusted, contact Nanex support (support@nanex.net) for assistance changing your permissions.";
-    case NxCAException::NxCA_EXCEPTION_OPT_SYMBOL:
-        return "A option symbol was referenced that was not defined. Your permissions may need to be adjusted, contact Nanex support (support@nanex.net) for assistance changing your permissions.";
-    case NxCAException::NxCA_EXCEPTION_SYMBOL:
-        return "A symbol was referenced that was not defined. Your permissions may need to be adjusted, contact Nanex support (support@nanex.net) for assistance changing your permissions.";
-    case NxCAException::NxCA_EXCEPTION_CS32:
-        return "Internal decoder failure. Data is corrupt and the tape should be re-downloaded. Contact nanex support (support@nanex.net) for assistance replacing tapes.";
-    case NxCAException::NxCA_EXCEPTION_PERM_ID_OOB:
-        return "Permission ID out of bounds. Your permissions may need to be adjusted, contact Nanex support (support@nanex.net) for assistance changing your permissions.";
-    case NxCAException::NxCA_EXCEPTION_BLOCK_CRC:
-        return "A 64kB block of data has failed its CRC check. Data is corrupt and the tape should be re-downloaded. Contact nanex support (support@nanex.net) for assistance replacing tapes.";
-    case NxCAException::NxCA_EXCEPTION_MSG_HEADER:
-        return "Message header failed check, data is corrupt and the tape should be re-downloaded. Contact Nanex support (support@nanex.net) for assistance replacing tapes.";
-    case NxCAException::NxCA_EXCEPTION_TAPE_HEADER:
-        return "Very start of the tape failed check, data is corrupt and the tape should be re-downloaded. Contact Nanex support (support@nanex.net) for assistance replacing tapes.";
-    case NxCAException::NxCA_EXCEPTION_END_OF_TAPE:
-        return "End of tape has been reached.";
-    case NxCAException::NxCA_EXCEPTION_UNSUPPORTED_API:
-        return "The API version does not support the tape or NxCore Access Stream. Download the Latest API. Introduced in NxCore API 3.0.123 and 3.2.21.";
-    case NxCAException::NxCA_EXCEPTION_LAST:
-        return "Internal counter, not currently used. Can be safely ignored.";
+    case NxCAException::UserCancel:
+        return "User called cancel."sv;
+    case NxCAException::UserRestart:
+        return "User called restart."sv;
+    case NxCAException::ClockCrc:
+        return "Clock CRC error – data corrupt. Re-download tape or contact support@nanex.net"sv;
+    case NxCAException::MsgBitSize:
+        return "Message bit size error – data corrupt. Re-download tape or contact support@nanex.net"sv;
+    case NxCAException::MsgChkSum:
+        return "Message checksum error – data corrupt. Re-download tape or contact support@nanex.net"sv;
+    case NxCAException::DecodeFields:
+        return "Decode fields error – data corrupt. Re-download tape or contact support@nanex.net"sv;
+    case NxCAException::DecodeCatDef:
+        return "Decode category definitions error – data corrupt. Re-download tape or contact support@nanex.net"sv;
+    case NxCAException::DecodeCatData:
+        return "Decode category data error – data corrupt. Re-download tape or contact support@nanex.net"sv;
+    case NxCAException::ListedExg:
+        return "Listed exchange not defined – check permissions. Contact support@nanex.net"sv;
+    case NxCAException::OptSymbol:
+        return "Option symbol not defined – check permissions. Contact support@nanex.net"sv;
+    case NxCAException::Symbol:
+        return "Symbol not defined – check permissions. Contact support@nanex.net"sv;
+    case NxCAException::Cs32:
+        return "Internal decoder failure (CS32) – data corrupt. Re-download tape or contact support@nanex.net"sv;
+    case NxCAException::PermIdOob:
+        return "Permission ID out of bounds – check permissions. Contact support@nanex.net"sv;
+    case NxCAException::BlockCrc:
+        return "64kB block CRC error – data corrupt. Re-download tape or contact support@nanex.net"sv;
+    case NxCAException::MsgHeader:
+        return "Message header error – data corrupt. Re-download tape or contact support@nanex.net"sv;
+    case NxCAException::TapeHeader:
+        return "Tape header error – data corrupt. Re-download tape or contact support@nanex.net"sv;
+    case NxCAException::EndOfTape:
+        return "End of tape reached."sv;
+    case NxCAException::UnsupportedApi:
+        return "Unsupported API version – download latest NxCore API (3.0.123+ / 3.2.21+)"sv;
+
     default:
-        return "";
+        return "Unknown NxCAException"sv;
     }
+}
+
+[[nodiscard]] std::string to_string(NxCAException e)
+{
+    return std::string{to_string_view(e)};
 }

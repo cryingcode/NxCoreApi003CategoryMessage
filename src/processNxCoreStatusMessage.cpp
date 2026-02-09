@@ -1,4 +1,4 @@
-// file:  processNxCoreStatusMessage.cpp
+// processNxCoreStatusMessage.cpp
 
 /*
 struct NxCoreSystem{...} is used to generate a NxMSG_STATUS report and return to the
@@ -6,33 +6,90 @@ OnNxCoreCallback(const NxCoreSystem *pNxCoreSys, const NxCoreMessage *pNxCoreMsg
 This function processes a NxMSG_STATUS message and prints relevant information to standard output.
 */
 
-#include <iostream>
-#include <iomanip>
-#include "nxcaExceptions.hpp"
 #include "processNxCoreStatusMessage.hpp"
 
-extern NxCoreClass NxCore; // defined in main.cpp
+#include "nxcaExceptions.hpp"
 
-int processNxCoreStatusMessage(
-    const NxCoreSystem *pNxCoreSys,
-    [[maybe_unused]] const NxCoreMessage *pNxCoreMsg)
+#include <iostream>
+#include <iomanip>
+#include <string_view>
+
+extern NxCoreClass NxCore; // ← still needed for version queries; consider passing ref later
+
+namespace
 {
-    using namespace std;
 
-    // Print time every minute (including sentinel 24:00:00)
-    if (pNxCoreSys->ClockUpdateInterval >= NxCLOCK_MINUTE &&
-        pNxCoreSys->nxTime.Hour <= 24)
+    constexpr unsigned NxCoreSentinelHour = 24u;
+
+    constexpr std::string_view status_to_string(int status) noexcept
     {
-        cout.fill('0');
-        cout << "NxCore Time: "
-             << setw(2) << static_cast<int>(pNxCoreSys->nxDate.Month) << "/"
-             << setw(2) << static_cast<int>(pNxCoreSys->nxDate.Day) << "/"
-             << setw(4) << static_cast<int>(pNxCoreSys->nxDate.Year) << " "
-             << setw(2) << static_cast<int>(pNxCoreSys->nxTime.Hour) << ":"
-             << setw(2) << static_cast<int>(pNxCoreSys->nxTime.Minute) << ":"
-             << setw(2) << static_cast<int>(pNxCoreSys->nxTime.Second) << endl;
+        /* Detailed NxCore Status Message Descriptions:
+        NxCORESTATUS_RUNNING            0	Signals that processing is proceeding normally.
+        NxCORESTATUS_INITIALIZING       1	Signals that NxCoreAPI has started processing a real-time or historic tape. The first callback message is always NxMSG_STATUS with the Status member set to NxCORESTATUS_INITIALIZING. You will not get another message with this value unless recoverable errors are encountered by NxCoreAPI.
+        NxCORESTATUS_COMPLETE           2	Signals that NxCoreAPI has completed processing a tape. This is the last message callback you will receive regarding a tape. You will always get this message unless you abort processing by returning a value of NxCOREBACKRETURN_STOP in your callback.
+        NxCORESTATUS_SYNCHRONIZING      3	Synchronization reset detected in the tape, continuing processing
+        NxCORESTATUS_ERROR              4	Signals that an error was encountered by NxCoreAPI when processing a Tape. More information on the error encountered may be available in the members StatusData and StatusDisplay.
+        NxCORESTATUS_WAITFORCOREACCESS  5	If NxCoreAccess is not present (perhaps it was temporarily stopped because you upgraded it, for example), system will wait for it to return at the point it left off and it will set the value of Status to this value at regular intervals. This allows your application to take special action, or terminate the processing of the NxCore Tape.
+        NxCORESTATUS_RESTARTING_TAPE    6	Signals that your callback returned NxCALLBACKRETURN_RESTART from a previous callback, and system is restarting the same tape from the beginning
+        NxCORESTATUS_LOADED_STATE       7	System is initialized from state
+        NxCORESTATUS_SAVING_STATE       8	System will capture the state after this message
+        NxCORESTATUS_SYMBOLSPIN         9	signals system symbol spin state: StatusData == 0 when starting, 1 when complete
+        */
+        switch (status)
+        {
+        case NxCORESTATUS_RUNNING:
+            return "Running";
+        case NxCORESTATUS_INITIALIZING:
+            return "Initializing";
+        case NxCORESTATUS_COMPLETE:
+            return "Complete";
+        case NxCORESTATUS_SYNCHRONIZING:
+            return "Synchronizing";
+        case NxCORESTATUS_ERROR:
+            return "Error";
+        case NxCORESTATUS_WAITFORCOREACCESS:
+            return "Waiting for Core Access";
+        case NxCORESTATUS_RESTARTING_TAPE:
+            return "Restarting Tape";
+        case NxCORESTATUS_LOADED_STATE:
+            return "Loaded from State";
+        case NxCORESTATUS_SAVING_STATE:
+            return "Saving State";
+        case NxCORESTATUS_SYMBOLSPIN:
+            return "Symbol Spin";
+        default:
+            return "Unknown";
+        }
     }
 
+    void print_minute_timestamp(const NxCoreSystem *pSys, std::ostream &out)
+    {
+        out.fill('0');
+        out << "NxCore Time: "
+            << std::setw(2) << static_cast<unsigned>(pSys->nxDate.Month) << '/'
+            << std::setw(2) << static_cast<unsigned>(pSys->nxDate.Day) << '/'
+            << std::setw(4) << pSys->nxDate.Year << ' '
+            << std::setw(2) << static_cast<unsigned>(pSys->nxTime.Hour) << ':'
+            << std::setw(2) << static_cast<unsigned>(pSys->nxTime.Minute) << ':'
+            << std::setw(2) << static_cast<unsigned>(pSys->nxTime.Second) << '\n';
+    }
+
+} // namespace
+
+[[nodiscard]] int processNxCoreStatusMessage(
+    const NxCoreSystem* pNxCoreSys,
+    const NxCoreMessage* /*pNxCoreMsg*/,
+    std::ostream &out) noexcept
+{
+    if (!pNxCoreSys)
+        return NxCALLBACKRETURN_STOP;
+
+    const auto clock_interval = pNxCoreSys->ClockUpdateInterval;
+    const auto &time = pNxCoreSys->nxTime;
+    // const auto &date = pNxCoreSys->nxDate; Not used yet
+    const auto status = pNxCoreSys->Status;
+
+    // ── Timestamp printing (every minute boundary including hour rollover) ──
     /*
     NxCLOCK_NOCHANGE  0	Indicates that the NxCore Feed Timestamp has not changed.
     NxCLOCK_CLOCK     1	Indicates that the member nxTime.Millisecond has changed (but not Second, Minute, or Hour)
@@ -40,77 +97,83 @@ int processNxCoreStatusMessage(
     NxCLOCK_MINUTE    3	Indicates that the member nxTime.Minute has changed (as has Millisecond and Second, but not Hour).
     NxCLOCK_HOUR      4	Indicates that the member nxTime.Hour has changed (as has Millisecond, Second, and Minute).
     */
-
-    if (pNxCoreSys->ClockUpdateInterval >= NxCLOCK_MINUTE &&
-        pNxCoreSys->nxTime.Hour == 24)
+    if (clock_interval >= NxCLOCK_MINUTE)
     {
-        cout << "NxCore tape file sentinel read -> hour of the day == 24.\n";
+        if (time.Hour < NxCoreSentinelHour)
+        {
+            print_minute_timestamp(pNxCoreSys, out);
+        }
+        else if (time.Hour == NxCoreSentinelHour)
+        {
+            out << "NxCore tape file sentinel read → hour of the day == 24.\n";
+        }
     }
 
-    /* Detailed NxCore Status Message Descriptions:
-    NxCORESTATUS_RUNNING            0	Signals that processing is proceeding normally.
-    NxCORESTATUS_INITIALIZING       1	Signals that NxCoreAPI has started processing a real-time or historic tape. The first callback message is always NxMSG_STATUS with the Status member set to NxCORESTATUS_INITIALIZING. You will not get another message with this value unless recoverable errors are encountered by NxCoreAPI.
-    NxCORESTATUS_COMPLETE           2	Signals that NxCoreAPI has completed processing a tape. This is the last message callback you will receive regarding a tape. You will always get this message unless you abort processing by returning a value of NxCOREBACKRETURN_STOP in your callback.
-    NxCORESTATUS_SYNCHRONIZING      3	Synchronization reset detected in the tape, continuing processing
-    NxCORESTATUS_ERROR              4	Signals that an error was encountered by NxCoreAPI when processing a Tape. More information on the error encountered may be available in the members StatusData and StatusDisplay.
-    NxCORESTATUS_WAITFORCOREACCESS  5	If NxCoreAccess is not present (perhaps it was temporarily stopped because you upgraded it, for example), system will wait for it to return at the point it left off and it will set the value of Status to this value at regular intervals. This allows your application to take special action, or terminate the processing of the NxCore Tape.
-    NxCORESTATUS_RESTARTING_TAPE    6	Signals that your callback returned NxCALLBACKRETURN_RESTART from a previous callback, and system is restarting the same tape from the beginning
-    NxCORESTATUS_LOADED_STATE       7	System is initialized from state
-    NxCORESTATUS_SAVING_STATE       8	System will capture the state after this message
-    NxCORESTATUS_SYMBOLSPIN         9	signals system symbol spin state: StatusData == 0 when starting, 1 when complete
-    */
-    switch (pNxCoreSys->Status)
+    // ── Status-specific handling ────────────────────────────────────────────
+    switch (status)
     {
     case NxCORESTATUS_RUNNING:
         break;
+
     case NxCORESTATUS_INITIALIZING:
-        cout << "NxCore Initialize Message.\n";
-        cout << "libnx.so version is v"
-             << NxCore.GetMajorVersion(pNxCoreSys->DLLVersion) << "."
-             << NxCore.GetMinorVersion(pNxCoreSys->DLLVersion) << "."
-             << NxCore.GetBuildVersion(pNxCoreSys->DLLVersion) << "\n";
+        out << "NxCore Initialize Message.\n";
+        out << "libnx.so version is v"
+            << NxCore.GetMajorVersion(pNxCoreSys->DLLVersion) << '.'
+            << NxCore.GetMinorVersion(pNxCoreSys->DLLVersion) << '.'
+            << NxCore.GetBuildVersion(pNxCoreSys->DLLVersion) << '\n';
         break;
+
     case NxCORESTATUS_COMPLETE:
-        cout << "NxCore Complete Message.\n";
+        out << "NxCore Complete Message.\n";
         break;
+
     case NxCORESTATUS_SYNCHRONIZING:
-        cout << "NxCore Synchronizing Message.\n";
+        out << "NxCore Synchronizing Message.\n";
         break;
+
     case NxCORESTATUS_ERROR:
-        cout << "NxCore Error:  " << pNxCoreSys->StatusDisplay
-             << " (" << pNxCoreSys->StatusData << ")  "
-             << to_string(static_cast<NxCAException>(pNxCoreSys->StatusData)) << "\n";
+        out << "NxCore Error: " << pNxCoreSys->StatusDisplay
+            << " (" << pNxCoreSys->StatusData << ")  "
+            << to_string(static_cast<NxCAException>(pNxCoreSys->StatusData)) << '\n';
         return NxCALLBACKRETURN_STOP;
+
     case NxCORESTATUS_WAITFORCOREACCESS:
-        cout << "NxCore Wait For Access.\n";
+        out << "NxCore Wait For Access.\n";
         break;
+
     case NxCORESTATUS_RESTARTING_TAPE:
-        cout << "NxCore Restart Tape Message.\n";
+        out << "NxCore Restart Tape Message.\n";
         break;
+
     case NxCORESTATUS_LOADED_STATE:
-        cout << "NxCore System Loaded from State.\n";
+        out << "NxCore System Loaded from State.\n";
         break;
+
     case NxCORESTATUS_SAVING_STATE:
-        cout << "NxCore System Will Save State After this Message.\n";
+        out << "NxCore System Will Save State After this Message.\n";
         break;
+
     case NxCORESTATUS_SYMBOLSPIN:
-        cout << "NxCore System symbol spin state: StatusData == " << pNxCoreSys->StatusData;
-        if (pNxCoreSys->StatusData == 0)
-            cout << "  Starting symbol spin...\n";
-        else if (pNxCoreSys->StatusData == 1)
-            cout << "  Symbol spin complete.\n";
+        out << "NxCore System symbol spin state: StatusData == " << pNxCoreSys->StatusData;
+        if (pNxCoreSys->StatusData == NxCSSYMBOLSPIN_STARTING)
+            out << "  Starting symbol spin...\n";
+        else if (pNxCoreSys->StatusData == NxCSSYMBOLSPIN_COMPLETE)
+            out << "  Symbol spin complete.\n";
         else
         {
-            cout << "  Symbol spin StatusData error.  "
-                 << pNxCoreSys->StatusDisplay
-                 << " (" << pNxCoreSys->StatusData << ") \n";
+            out << "  Symbol spin StatusData error.  "
+                << pNxCoreSys->StatusDisplay << " (" << pNxCoreSys->StatusData << ")\n";
             return NxCALLBACKRETURN_STOP;
         }
         break;
+
     default:
-        cout << "NxCore Unknown (default) Status Message:  "
-             << pNxCoreSys->StatusDisplay << " (" << pNxCoreSys->StatusData << ")\n";
+        out << "NxCore Unknown Status (" << status_to_string(status) << "): "
+            << pNxCoreSys->StatusDisplay << " (" << pNxCoreSys->StatusData << ")\n";
+        // Consider: return NxCALLBACKRETURN_STOP;  // stricter
+        break;
     }
+
     return NxCALLBACKRETURN_CONTINUE;
 }
 

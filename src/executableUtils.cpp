@@ -1,22 +1,35 @@
-// file:  executableUtils.cpp
-
-#include <stdexcept>
+// executableUtils.cpp
 #include "executableUtils.hpp"
 
-std::string get_executable_path()
+#include <filesystem>
+#include <string>
+#include <stdexcept>
+
+namespace fs = std::filesystem;
+
+[[nodiscard]] std::filesystem::path get_executable_path()
 {
-    namespace fs = std::filesystem;
-    try
+    // On Linux → /proc/self/exe is a symlink to the actual binary
+    static const fs::path proc_self_exe{"/proc/self/exe"};
+
+    std::error_code ec;
+    auto canonical_path = fs::canonical(proc_self_exe, ec);
+
+    if (ec)
     {
-        return fs::canonical("/proc/self/exe").string();
+        throw std::runtime_error(
+            "Failed to canonicalize /proc/self/exe: " + ec.message());
     }
-    catch (const fs::filesystem_error &e)
-    {
-        throw std::runtime_error("Failed to resolve executable path: " + std::string(e.what()));
-    }
+
+    return canonical_path;
 }
 
-std::string get_executable_filename()
+[[nodiscard]] std::string get_executable_filename()
 {
-    return std::filesystem::path(get_executable_path()).filename().string();
+    // Most common use-case is just the filename → we cache the full path
+    static const auto cached_path = get_executable_path();
+
+    // .filename() → returns path (may be empty)
+    // .string()   → std::string (empty if no filename component)
+    return cached_path.filename().string();
 }

@@ -11,13 +11,13 @@ NxCore historical tapefile reader (.nx2/.nx3): Linux-based C++17 code built usin
 **Status:** Tested on Ubuntu 24.04 LTS with libnx.so Linux x64 (latest version as of early 2026).
 
 ## Quick Start (Ubuntu 24.04)
-From the main project directory `NxCoreApi003CategoryMessage` the fastest quick build uses a convenience script:
+From the main project directory containing the `src/` subdirectory the fastest way (uses a convenience script):
 ```bash
 # 1. Place libnx.so in ./extern/nxcore/libnx.so
 # 2. Build & install from the main project directory
 ./qb.sh
 # 3. Run on a test tape file (libnx.so name works after ldconfig)
-catmsg libnx.so /path/to/your.tape.nx2
+nxcore-cat-message libnx.so /path/to/your.tape.nx2
 ```
 
 Most NxCore examples are Windows-oriented and use very old build systems. This project shows how to use modern CMake (3.25+), out-of-source builds, proper rpath handling, and clean C++17 callback wrappers on Linux — while staying as close as possible to the original Sample3 logic.
@@ -30,7 +30,7 @@ Most NxCore examples are Windows-oriented and use very old build systems. This p
 5. Reproducible / container-friendly
 6. Improved project directory structure
 7. CMake best practices
-8. GitHub workflows compliance
+8. GitHub workflows compliance for non-proprietary material
 
 ## Demonstrated API Usage
 1. Handling the NxCore Category Message
@@ -69,8 +69,9 @@ NxCoreApi003CategoryMessage/
 │   └── workflows/
 │       └── ci-build.yml               # Build status badge
 ├── apps/
-│   └── catmsg/
-│       ├── main.cpp
+│   ├── CMakeLists.txt
+│   └── nxcore-cat-message/
+│       ├── main.cpp                   # copied from src/
 │       └── CMakeLists.txt             # Subdirectory CMake for the app
 ├── bin/
 ├── build/
@@ -90,12 +91,15 @@ NxCoreApi003CategoryMessage/
 ├── lib/
 ├── sandbox/
 ├── src/
+│   ├── categoryMessageDump.cpp        # bonus - for those who look through the code
 │   ├── executableUtils.cpp
+│   ├── main.cpp
 │   ├── nxcaExceptions.cpp
+│   ├── nxcore_global.cpp
 │   ├── nxcoreCallback.cpp
 │   ├── processNxCoreCategoryMessage.cpp
 │   ├── processNxCoreStatusMessage.cpp
-│   run.sh                             # Convience script ├── processNxCoreSymbolSpinMessage.cpp
+|   ├── processNxCoreSymbolSpinMessage.cpp
 │   └── srcinc/
 │       ├── executableUtils.hpp
 │       ├── nxcaExceptions.hpp
@@ -149,11 +153,11 @@ cmake --install build
 ```
 Then run locally:
 ```bash
-./install/bin/catmsg ./install/lib/libnx.so /path/to/your.tape.nx2
+./install/bin/nxcore-cat-message ./install/lib/libnx.so /path/to/your.tape.nx2
 ```
 
 #### Installed Files (default prefix /usr/local):
-- Binary: `/usr/local/bin/catmsg`
+- Binary: `/usr/local/bin/nxcore-cat-message`
 - Library: `/usr/local/lib/libNxCoreApi003CategoryMessage.a`
 - Library: `/usr/local/lib/libnx.so`
 - CMake config: `/usr/local/lib/cmake/NxCoreApi003CategoryMessage/*.cmake`
@@ -161,25 +165,31 @@ Then run locally:
 ## Running the Application
 After installation and `sudo ldconfig`, the loader finds `libnx.so` by name alone (no full path needed):
 ```bash
-catmsg libnx.so /path/to/tape/file.nx2
+nxcore-cat-message libnx.so /path/to/tape/file.nx2
 ```
 Or during development (from build directory):
 ```bash
-./apps/catmsg/catmsg ../extern/nxcore/libnx.so /path/to/your.tape.nx2
+./apps/nxcore-cat-message/nxcore-cat-message ../extern/nxcore/libnx.so /path/to/your.tape.nx2
 ```
 
 ### Usage without arguments (help output)
 ```bash
-catmsg
-Program derived from NxCore API Sample3
-Usage: catmsg <path-to-libnx.so> <path-to-tapefile>
+nxcore-cat-message
+NxCore Category Message (modernized C++17 version)
+
+Usage:
+  nxcore-cat-message <path-to-libnx.so> [path-to-tape-file]
+
+Examples:
+  nxcore-cat-message ./libnx.so /data/tapes/20250102.nxc
+  nxcore-cat-message ./libnx.so            # process live feed
 ```
 
 ### Sample program output from reading a tapefile
 ```bash
-catmsg libnx.so ~/20211013.WE.nx2
+nxcore-cat-message libnx.so ~/20211013.WE.nx2
 Reading from tapefile: /home/crymoney/Crymoney/CrymoneyTest/NanexNxCoreDataSets/20211013.WE.nx2
-NxCore C++ catmsg Start.
+NxCore C++ nxcore-cat-message Start.
 Processing the tape: /home/crymoney/Crymoney/CrymoneyTest/NanexNxCoreDataSets/20211013.WE.nx2
 NxCore Initialize Message.
 libnx.so version is v3.2.18
@@ -198,14 +208,14 @@ NxCore Time: 10/13/2021 24:00:00
 NxCore tape file sentinel read -> hour of the day == 24.
 NxCore Complete Message.
 Tape completed normally.
-NxCore C++ catmsg Stop.
+NxCore C++ nxcore-cat-message Stop.
 ```
 
 ## Troubleshooting
 - If you get "cannot open shared object file: No such file or directory": Ensure `libnx.so` path is correct and re-run `sudo ldconfig` if the library is installed system-wide.
 - Permission denied when opening tape file: Check file permissions, ownership, and path.
 - Callback not firing: Verify tape file is valid NxCore format (.nx2 or .nx3).
-- `libnx.so`: cannot open shared object file even after install → Check that the binary was built with proper INSTALL_RPATH (run chrpath -l /usr/local/bin/catmsg or readelf -d | grep RPATH). If missing, rebuild with rpath settings.
+- `libnx.so`: cannot open shared object file even after install → Check that the binary was built with proper INSTALL_RPATH (run chrpath -l /usr/local/bin/nxcore-cat-message or readelf -d | grep RPATH). If missing, rebuild with rpath settings.
 
 ## Planned / Possible Extensions
 - Unit tests for callback logic (using CppUnit or GoogleTest)

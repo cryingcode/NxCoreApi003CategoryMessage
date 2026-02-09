@@ -1,7 +1,8 @@
+// executableUtils.hpp
 #pragma once
 
-#include <string>
 #include <filesystem>
+#include <string>
 
-std::string get_executable_path();
-std::string get_executable_filename();
+[[nodiscard]] std::filesystem::path get_executable_path();
+[[nodiscard]] std::string get_executable_filename();

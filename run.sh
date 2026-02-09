@@ -9,7 +9,7 @@
 # cd ~/Crymoney/CrymoneyCodeLinux/NxCoreApi003CategoryMessage
 # ./run.sh
 
-APPFILENAME="catmsg"
+APPFILENAME="nxcore-cat-message"
 TAPEFILEPATH="$HOME/Crymoney/CrymoneyTest/NanexNxCoreDataSets/20211013.WE.nx2"
 
 # Optional: verify the file exists (very useful for debugging)

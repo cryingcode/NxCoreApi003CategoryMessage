@@ -33,18 +33,18 @@ Expected output from the install step:
 sudo cmake --install build
 [sudo] password for crymoney: 
 -- Install configuration: ""
--- Installing: /usr/local/bin/catmsg
--- Set non-toolchain portion of runtime path of "/usr/local/bin/catmsg" to "$ORIGIN/../lib"
+-- Installing: /usr/local/bin/nxcore-cat-message
+-- Set non-toolchain portion of runtime path of "/usr/local/bin/nxcore-cat-message" to ""
 -- Installing: /usr/local/lib/libNxCoreApi003CategoryMessage.a
 -- Up-to-date: /usr/local/lib/libnx.so
 -- Installing: /usr/local/lib/cmake/NxCoreApi003CategoryMessage/NxCoreApi003CategoryMessageTargets.cmake
 -- Installing: /usr/local/lib/cmake/NxCoreApi003CategoryMessage/NxCoreApi003CategoryMessageTargets-noconfig.cmake
 -- Installing: /usr/local/lib/cmake/NxCoreApi003CategoryMessage/NxCoreApi003CategoryMessageConfigVersion.cmake
+crymoney@rick-Precision-3510-A:~/Crymoney/CrymoneyCodeLinux/NxCoreApi003CategoryMessage$ nxcore-cat-message
 
-Executable application is in the build target directory:  build/apps/catmsg/catmsg
-Executable application is installed as:  catmsg
+Executable application is in the build target directory:  build/apps/nxcore-cat-message/nxcore-cat-message
+Executable application is installed as:  nxcore-cat-message
 ]]
-
 
 cmake_minimum_required(VERSION 3.25)
 
@@ -55,11 +55,11 @@ project(NxCoreApi003CategoryMessage
 )
 
 # ── Options ────────────────────────────────────────────────────────────────
-option(BUILD_SHARED_LIBS        "Build libraries as shared instead of static" OFF)
-option(BUILD_LIBRARY            "Build the core processing library"           ON)
-option(BUILD_APPS               "Build applications (catmsg etc.)"            ON)
-option(BUILD_TESTS              "Build unit tests"                            OFF)
-option(ENABLE_NXCORE            "Enable NxCore proprietary support"           ON)
+option(BUILD_SHARED_LIBS        "Build libraries as shared instead of static"   OFF)
+option(BUILD_LIBRARY            "Build the core processing library"              ON)
+option(BUILD_APPS               "Build applications (nxcore-cat-message etc.)"   ON)
+option(BUILD_TESTS              "Build unit tests"                              OFF)
+option(ENABLE_NXCORE            "Enable NxCore proprietary support"              ON)
 
 # ── Global settings ────────────────────────────────────────────────────────
 set(CMAKE_CXX_STANDARD          17)
@@ -105,6 +105,7 @@ if(BUILD_LIBRARY)
             src/executableUtils.cpp
             src/nxcaExceptions.cpp
             src/nxcoreCallback.cpp
+            src/nxcore_global.cpp
             src/categoryMessageDump.cpp
             src/processNxCoreCategoryMessage.cpp
             src/processNxCoreStatusMessage.cpp
@@ -127,6 +128,19 @@ endif()
 
 # ── Applications ───────────────────────────────────────────────────────────
 if(BUILD_APPS)
+    set(apps_dir "${CMAKE_CURRENT_SOURCE_DIR}/apps")
+
+    if(NOT EXISTS "${apps_dir}")
+        message(STATUS "Creating missing 'apps/' directory")
+        file(MAKE_DIRECTORY "${apps_dir}")
+        if(NOT EXISTS "${apps_dir}")
+            message(WARNING "Failed to create 'apps/' directory — build will likely fail later")
+        endif()
+    else()
+        message(STATUS "Directory 'apps/' already exists")
+    endif()
+
+    # Now try to add it (will error if no CMakeLists.txt inside → that's expected)
     add_subdirectory(apps)
 endif()
 

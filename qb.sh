@@ -14,7 +14,7 @@ echo ""
 echo "To install system-wide (requires sudo):"
 echo "  cd build && sudo cmake --install . && sudo ldconfig && cd .."
 echo ""
-echo "Or just run locally from build/apps/catmsg/catmsg"
+echo "Or just run locally from build/apps/nxcore-cat-message/nxcore-cat-message"
 echo ""
 # Optional: clean old files only if you really want (careful!)
-# sudo rm -f /usr/local/bin/catmsg /usr/local/lib/libNxCoreApi003CategoryMessage.a
+# sudo rm -f /usr/local/bin/nxcore-cat-message /usr/local/lib/libNxCoreApi003CategoryMessage.a
