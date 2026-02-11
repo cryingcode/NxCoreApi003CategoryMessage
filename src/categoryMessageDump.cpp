@@ -20,25 +20,27 @@ namespace
     {
         if (!hdr.pnxOptionHdr)
         {
-            return hdr.pnxStringSymbol ? hdr.pnxStringSymbol->String : "(null)";
+            return hdr.pnxStringSymbol
+                       ? hdr.pnxStringSymbol->String
+                       : "(null)";
         }
 
         const auto &opt = *hdr.pnxOptionHdr;
-        const auto &base = *hdr.pnxStringSymbol;
+        const auto &base = *hdr.pnxStringSymbol; // safe deref — we know it's non-null here
 
-        // OSI format (most common nowadays)
+        // OSI format
         if (opt.pnxsDateAndStrike && opt.pnxsDateAndStrike->String[1] == ' ')
         {
             return fmt::format("{}{:02d}{:02d}{:02d}{}{:08d}",
                                base.String,
-                               opt.nxExpirationDate.Year % 100, // usually 00-99
+                               opt.nxExpirationDate.Year % 100,
                                opt.nxExpirationDate.Month,
                                opt.nxExpirationDate.Day,
                                (opt.PutCall == 0) ? 'C' : 'P',
                                opt.strikePrice);
         }
 
-        // Legacy OPRA / short format
+        // Legacy OPRA
         if (opt.pnxsDateAndStrike)
         {
             return fmt::format("{}{}{}",
@@ -47,8 +49,8 @@ namespace
                                opt.pnxsDateAndStrike->String[1]);
         }
 
-        // fallback
-        return base.String ? base.String : "(no symbol)";
+        // Fallback — we already know base.String exists
+        return base.String;
     }
 
     std::string_view getPermissionName(int perm_id)
@@ -113,7 +115,7 @@ namespace
             break;
 
         case NxCFT_NxSTRING:
-            if (cf.data.pnxString && cf.data.pnxString->String)
+            if (cf.data.pnxString)
             {
                 std::fprintf(out, "\"%s\"\n", cf.data.pnxString->String);
             }
@@ -180,7 +182,7 @@ void categoryMessageDump(const NxCoreSystem *sys, const NxCoreMessage *msg)
     std::puts("═══════════════════════════════════════════════");
     std::puts("Category Message Dump:");
     std::printf("  Category       : %s (%d)\n",
-                cat.pnxStringCategory && cat.pnxStringCategory->String
+                cat.pnxStringCategory
                     ? cat.pnxStringCategory->String
                     : "(null)",
                 cat.pnxStringCategory ? cat.pnxStringCategory->Atom : -1);

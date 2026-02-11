@@ -4,6 +4,7 @@
 
 set -euo pipefail
 
+cp src/main.cpp apps/nxcore-cat-message/main.cpp
 rm -rf build && mkdir build
 cmake -S . -B build -G Ninja -DCMAKE_VERBOSE_MAKEFILE=ON
 cmake --build build --parallel
