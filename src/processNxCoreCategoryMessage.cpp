@@ -10,7 +10,7 @@
 #include <iostream>
 #include <string_view>
 
-extern NxCoreClass NxCore; // defined in main.cpp
+extern NxCoreClass NxCore;
 
 namespace
 {

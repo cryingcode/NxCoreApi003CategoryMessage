@@ -46,7 +46,7 @@ namespace
     {
         if (argc <= 0 || !argv || !argv[0])
         {
-            return "nxcore-category"; // fallback name
+            return "nxcore-cat-message"; // fallback name
         }
 
         try
