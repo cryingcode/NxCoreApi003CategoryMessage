@@ -66,8 +66,9 @@ Obtain `libnx.so` and the NxCore API headers (NxCoreAPI.h, etc.) from: https://w
 NxCoreApi003CategoryMessage/
 ├── .git/
 ├── .github/
-│   └── workflows/
+│   └── workflows/                     # Disabled - proprietary code
 │       └── ci-build.yml               # Build status badge
+├── .vscode/
 ├── apps/
 │   ├── CMakeLists.txt
 │   └── nxcore-cat-message/
@@ -85,39 +86,39 @@ NxCoreApi003CategoryMessage/
 │       │   └── NxCoreAPI_Wrapper_C++.h
 │       └── libnx.so
 ├── include/
-│   └── nxcorecategorymessage/         # Namespaced public headers (expandable)
-│       ├── version.hpp                # Optional future version header
-│       └── processor.hpp              # Example: public API if library grows
 ├── lib/
 ├── sandbox/
 ├── src/
+│   ├── srcinc/
+│   |   ├── executableUtils.hpp
+│   |   ├── nxcaExceptions.hpp
+│   |   ├── nxcoreCallback.hpp
+│   |   ├── processNxCoreCategoryMessage.hpp
+│   |   ├── processNxCoreStatusMessage.hpp
+│   |   ├── processNxCoreSymbolSpinMessage.hpp
+│   |   └── nxcore/                    # Proprietary, legacy Windows stubs, gitignored
+│   |       ├── StdAfx.h
+│   |       └── targetver.h
+│   ├── srclib/
+│   |   └── nxcore/                    # Proprietary, gitignored
+│   |       ├── NxCoreAPI_Wrapper_C++.h
+│   |       └── NxCoreAPI.h
 │   ├── categoryMessageDump.cpp        # bonus - for those who look through the code
 │   ├── executableUtils.cpp
-│   ├── main.cpp
 │   ├── nxcaExceptions.cpp
 │   ├── nxcore_global.cpp
 │   ├── nxcoreCallback.cpp
 │   ├── processNxCoreCategoryMessage.cpp
 │   ├── processNxCoreStatusMessage.cpp
-|   ├── processNxCoreSymbolSpinMessage.cpp
-│   └── srcinc/
-│       ├── executableUtils.hpp
-│       ├── nxcaExceptions.hpp
-│       ├── nxcoreCallback.hpp
-│       ├── processNxCoreCategoryMessage.hpp
-│       ├── processNxCoreStatusMessage.hpp
-│       ├── processNxCoreSymbolSpinMessage.hpp
-│       └── nxcore/                    # Proprietary,legacy Windows stubs, gitignored
-│           ├── StdAfx.h
-│           └── targetver.h
+|   └── processNxCoreSymbolSpinMessage.cpp
 ├── tests/                             # Expand later
 ├── .gitignore
 ├── CMakeLists.txt
 ├── CMakePresets.json                  # Modern presets
 ├── LICENSE.md
-├── qb.sh                              # Convience script
+├── qb.sh                              # Convience script for build
 ├── README.md
-└── run.sh                             # Convience script
+└── run.sh                             # Convience script for run, references tapefile
 ```
 
 ## Building & Installing
